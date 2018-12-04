@@ -12,6 +12,7 @@ const roomId = "19478060";
 class ChatApp extends React.Component {
   constructor(props) {
     super(props);
+    this.sendMessage = this.sendMessage.bind(this);
     const messageHolder = [
       {
         messageId: "Person",
@@ -23,8 +24,38 @@ class ChatApp extends React.Component {
       }
     ];
     this.state = {
-      messages: messageHolder
+      messages: []
     };
+  }
+
+  componentDidMount() {
+    const chatManager = new ChatManager({
+      instanceLocator: instanceLocator,
+      userId: "jdoe",
+      tokenProvider: new TokenProvider({
+        url: testToken
+      })
+    });
+    chatManager.connect().then(currentUser => {
+      this.currentUser = currentUser;
+      currentUser.subscribeToRoom({
+        roomId: roomId,
+        hooks: {
+          onNewMessage: message => {
+            this.setState({
+              messages: [...this.state.messages, message]
+            });
+          }
+        }
+      });
+    });
+  }
+
+  sendMessage(messageValue) {
+    this.currentUser.sendMessage({
+      messageValue,
+      roomId: roomId
+    });
   }
 
   render() {
@@ -32,7 +63,7 @@ class ChatApp extends React.Component {
       <div>
         <Title />
         <MessageList messages={this.state.messages} />
-        <SendMessageForm />
+        <SendMessageForm sendMessage={this.sendMessage} />
       </div>
     );
   }
@@ -42,7 +73,7 @@ class Title extends React.Component {
   render() {
     return (
       <div>
-        <h1>Chat app</h1>
+        <h1>Asdf Sgdf Agcb</h1>
       </div>
     );
   }
@@ -73,14 +104,23 @@ class SendMessageForm extends React.Component {
       message: ""
     };
     this.handleChanges = this.handleChanges.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
   handleChanges(e) {
+    e.preventDefault();
     this.setState({
       message: e.target.value
     });
   }
 
-  handleSubmit() {}
+  handleSubmit(e) {
+    e.preventDefault();
+    this.props.sendMessage(this.state.message);
+    this.setState({
+      message: ""
+    });
+  }
+
   render() {
     return (
       <form>
@@ -91,6 +131,7 @@ class SendMessageForm extends React.Component {
           placeholder="Type your message and hit Enter"
           type="text"
         />
+        <button type="submit">Enter</button>
       </form>
     );
   }
